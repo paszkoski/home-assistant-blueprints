@@ -1,5 +1,5 @@
 blueprint:
-  name: TRV Calibrator
+  name: TRV Calibrator (new valves)
   description: Calibrate your TRV using an external sensor
   domain: automation
   input:
