@@ -1,5 +1,5 @@
 blueprint:
-  name: TRV Calibrator (new valves)
+  name: TRV Calibrator
   description: Calibrate your TRV using an external sensor
   domain: automation
   input:
@@ -22,6 +22,15 @@ blueprint:
         entity:
           domain: number
           device_class: temperature
+    delay_in_minutes:
+      name: Delay in minutes
+      description: Your thermostat will take some time to update the current temperature after calibration. The delay should be higher than this time.
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 60
+          step: 1
 
 mode: restart
 
@@ -61,7 +70,7 @@ condition:
 action:
   - delay:
       hours: 0
-      minutes: 1
+      minutes: !input delay_in_minutes
       seconds: 0
       milliseconds: 0
   - service: number.set_value
@@ -73,21 +82,13 @@ action:
             {% set trv_temperature = state_attr(trv, "current_temperature") | float(0) %}
 
             {% set trv_calibration = states(trv_calibration_number) | float %}
-            {% set trv_calibration_min = state_attr(trv_calibration_number, "min") | float(-5) %}
-            {% set trv_calibration_max = state_attr(trv_calibration_number, "max") | float(5) %}
-            {% set trv_calibration_step = state_attr(trv_calibration_number, "step") | float(1) %}
+            {% set trv_calibration_min = state_attr(trv_calibration_number, "min") | int(-5) %}
+            {% set trv_calibration_max = state_attr(trv_calibration_number, "max") | int(5) %}
+            {% set trv_calibration_step = state_attr(trv_calibration_number, "step") | int(1) %}
 
-            {% set step = trv_calibration_step | string %}
-            
-            {% if step.split(".") | length > 1 -%}
-              {% set trv_calibration_step_decimals = step.split(".")[1] | length %}
-            {%- else -%}
-              {% set trv_calibration_step_decimals = 0 %}
-            {%- endif %}
-
-            
-            {% set new_trv_calibration = room_temperature - trv_temperature %}
-            {% set new_trv_calibration_bounded = [ [ (new_trv_calibration - new_trv_calibration % trv_calibration_step) | round(trv_calibration_step_decimals), trv_calibration_min ] | max, trv_calibration_max ] | min %}
+            {% set new_trv_calibration = room_temperature - trv_temperature + trv_calibration %}
+            {% set new_trv_calibration_rounded = new_trv_calibration | round(0, 'floor') | int %}
+            {% set new_trv_calibration_bounded = [ [ new_trv_calibration_rounded, trv_calibration_min ] | max, trv_calibration_max ] | min %}
 
             {% if new_trv_calibration_bounded < trv_calibration - trv_calibration_step or trv_calibration + trv_calibration_step < new_trv_calibration_bounded -%}
               {{ new_trv_calibration_bounded }}
