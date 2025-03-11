@@ -84,7 +84,7 @@ action:
 
             {% set trv_calibration_min = state_attr(trv_calibration_number, "min") | float(-5) %}
             {% set trv_calibration_max = state_attr(trv_calibration_number, "max") | float(5) %}
-            {% set trv_calibration_step = 0.5 %}
+            {% set trv_calibration_step = 1.0 %}
 
             {# Calculate the effective TRV temperature by subtracting the current calibration #}
             {% set effective_trv_temperature = trv_temperature - trv_calibration %}
@@ -92,8 +92,8 @@ action:
             {# Calculate the new calibration value based on the room temperature and effective TRV temperature #}
             {% set new_trv_calibration = room_temperature - effective_trv_temperature %}
 
-            {# Round the new calibration value to the nearest 0.5 #}
-            {% set new_trv_calibration_rounded = (new_trv_calibration / trv_calibration_step) | round(0, 'floor') * trv_calibration_step %}
+            {# Round the new calibration value to the nearest 1.0 #}
+            {% set new_trv_calibration_rounded = new_trv_calibration | round(0, 'floor') | int %}
 
             {# Bound the new calibration value within the allowed range #}
             {% set new_trv_calibration_bounded = [ [ new_trv_calibration_rounded, trv_calibration_min ] | max, trv_calibration_max ] | min %}
